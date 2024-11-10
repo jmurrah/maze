@@ -31,7 +31,7 @@ public class MainTest
     /**
      * Rigourous Test :-)
      */
-    public void testApp()
+    public void testMain()
     {
         assertTrue( true );
     }
