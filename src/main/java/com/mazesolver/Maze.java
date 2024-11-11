@@ -11,15 +11,15 @@ import java.util.HashSet;
 import java.util.Set;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 public class Maze extends JFrame {
-  private static final int CELL_SIZE = 25;
+  private static final int CELL_SIZE = 15;
   private static final int PADDING = 25;
-  private int[][] grid;
   private boolean[][] horizontalWalls;
   private boolean[][] verticalWalls;
-  private int rows;
-  private int cols;
+  int rows;
+  int cols;
 
   public Maze(int width, int height) {
     this.rows = width;
@@ -32,24 +32,6 @@ public class Maze extends JFrame {
 
     initializeWalls();
     generateMaze();
-  }
-
-  private void initializeWalls() {
-    horizontalWalls = new boolean[rows + 1][cols];
-    verticalWalls = new boolean[rows][cols + 1];
-
-    // Initialize all walls to true
-    for (int i = 0; i <= rows; i++) {
-      for (int j = 0; j < cols; j++) {
-        horizontalWalls[i][j] = true;
-      }
-    }
-
-    for (int i = 0; i < rows; i++) {
-      for (int j = 0; j <= cols; j++) {
-        verticalWalls[i][j] = true;
-      }
-    }
   }
 
   private class MazePanel extends JPanel {
@@ -110,20 +92,50 @@ public class Maze extends JFrame {
     }
   }
 
+  private void initializeWalls() {
+    horizontalWalls = new boolean[rows + 1][cols];
+    verticalWalls = new boolean[rows][cols + 1];
+
+    // Initialize all walls to true
+    for (int i = 0; i <= rows; i++) {
+      for (int j = 0; j < cols; j++) {
+        horizontalWalls[i][j] = true;
+      }
+    }
+
+    for (int i = 0; i < rows; i++) {
+      for (int j = 0; j <= cols; j++) {
+        verticalWalls[i][j] = true;
+      }
+    }
+  }
+
   private void generateMaze() {
     System.out.println("Generating Maze");
-    dfs(0, 0, new HashSet<>());
+    new Thread(
+            () -> {
+              dfs(0, 0, new HashSet<>());
+            })
+        .start();
   }
 
   private void dfs(int x, int y, Set<Point> visited) {
     int[][] directions = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
-    Collections.shuffle(Arrays.asList(directions));
 
+    Collections.shuffle(Arrays.asList(directions));
     visited.add(new Point(x, y));
+
+    SwingUtilities.invokeLater(this::repaint);
+    try {
+      Thread.sleep(100);
+    } catch (InterruptedException e) {
+      System.out.println("Error");
+    }
 
     for (int[] direction : directions) {
       int rowOffset = direction[0], colOffset = direction[1];
       int newRow = rowOffset + x, newCol = colOffset + y;
+
       if (newRow >= 0
           && newRow < rows
           && newCol >= 0
@@ -133,10 +145,9 @@ public class Maze extends JFrame {
         if (rowOffset == -1) verticalWalls[y][x] = false;
         if (colOffset == 1) horizontalWalls[y + 1][x] = false;
         if (colOffset == -1) horizontalWalls[y][x] = false;
+
         dfs(x + rowOffset, y + colOffset, visited);
       }
     }
-
-    repaint();
   }
 }
